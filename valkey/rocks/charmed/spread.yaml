@@ -1,0 +1,35 @@
+project: valkey-rock
+
+backends:
+  craft:
+    type: craft
+    systems:
+      - ubuntu-24.04
+
+suites:
+  spread/tests/:
+    summary: General integration tests
+
+    prepare: |
+      # For 'rockcraft.skopeo'
+      snap install rockcraft --classic --edge
+      snap install docker
+
+      # Wait for docker daemon to come online
+      apt install -y retry
+      retry --times=10 --delay 2 -- docker run hello-world
+
+      # Load the rock into docker
+      rockcraft.skopeo --insecure-policy copy "oci-archive:$CRAFT_ARTIFACT" docker-daemon:valkey:spreadtest
+    prepare-each: |
+      docker run -d --rm -p 6379:6379 --name "${SPREAD_TASK//\//_}" valkey:spreadtest
+      sleep 5 # Wait for pebble to bootstrap and launch the service
+    restore-each: |
+      docker kill "${SPREAD_TASK//\//_}" || true
+    restore: |
+      docker image rm --force valkey:spreadtest
+
+exclude:
+  - .git
+
+kill-timeout: 1h
