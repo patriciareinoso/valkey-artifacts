@@ -1,7 +1,7 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE-rock file for licensing details.
 ---
-name: slim-valkey
+name: slim-valkey-test
 base: bare
 build-base: devel
 version: "9.0.3"
